@@ -1,11 +1,14 @@
 package com.xiaozhong.galaxy;
 
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -80,6 +83,27 @@ public class SpringBootKafkaApplicationTests {
         producer.send(new ProducerRecord<>("test", 0, "first".getBytes(), "first".getBytes()), callback1);
         producer.send(new ProducerRecord<>("test", 0, "second".getBytes(), "second".getBytes()), callback2);
         //print: first second
+    }
+
+    @Test
+    public void testConsumeMessage() {
+	    Properties props = new Properties();
+	    props.put("bootstrap.servers", "localhost:9092");
+	    props.put("group.id", "test");
+	    props.put("enable.auto.commit", "true");
+	    props.put("auto.commit.interval.ms", "1000");
+	    props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList("test"));
+
+        while (true) {
+            ConsumerRecords<String, String> records = consumer.poll(100);
+            records.forEach(record -> {
+                System.out.printf("offset = %d, key = %s, value = %d%n", record.offset(), record.key(), record.value());
+            });
+        }
     }
 
 }
